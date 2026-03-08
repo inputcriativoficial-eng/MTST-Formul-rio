@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MTST - Controle na Nuvem</title>
+    <title>MTST - Sistema Cloud</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#e31b23">
@@ -12,7 +12,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
-        /* Estilos baseados no seu original com melhorias para mobile */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
         body { background: #f0f0f0; padding-bottom: 80px; }
         header { background: #1a1a1a; color: white; padding: 15px; text-align: center; border-bottom: 4px solid #e31b23; font-weight: bold; }
@@ -25,25 +24,26 @@
         .item-lista { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 10px 0; }
         .tab-content { display: none; }
         .active { display: block; }
-        nav { position: fixed; bottom: 0; width: 100%; background: #1a1a1a; display: flex; border-top: 3px solid #e31b23; }
+        nav { position: fixed; bottom: 0; width: 100%; background: #1a1a1a; display: flex; border-top: 3px solid #e31b23; z-index: 100; }
         nav div { flex: 1; color: white; text-align: center; padding: 15px 5px; font-size: 12px; cursor: pointer; }
         #camera-container { width: 100%; max-width: 400px; margin: auto; display: none; position: relative; }
         #canvas { width: 100%; border-radius: 8px; transform: scaleX(-1); }
         .status-nuvem { font-size: 10px; text-align: center; padding: 5px; background: #eee; color: #666; }
+        #qrcode-exibicao { display: flex; flex-direction: column; align-items: center; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <header>SISTEMA DE CONTROLE - MTST</header>
-<div class="status-nuvem" id="status-sync">Sincronizando com a nuvem...</div>
+<div class="status-nuvem" id="status-sync">🔄 Conectando ao Firebase...</div>
 
 <div class="container">
     <div id="aba-membros" class="tab-content active">
         <div class="card">
             <h3>Cadastrar Novo Membro</h3>
             <input type="text" id="nome-membro" placeholder="Nome Completo">
-            <input type="text" id="id-membro" placeholder="ID ou CPF (Opcional)">
-            <button onclick="cadastrarMembro()">CADASTRAR</button>
+            <button onclick="cadastrarMembro()">CADASTRAR E GERAR QR</button>
+            <div id="qrcode-exibicao"></div>
         </div>
         <div class="card">
             <input type="text" id="busca" placeholder="🔍 Buscar membro..." onkeyup="filtrarMembros()">
@@ -54,23 +54,22 @@
     <div id="aba-presenca" class="tab-content">
         <div class="card">
             <h3>Registrar Presença</h3>
-            <button onclick="abrirCamera()">📷 ESCANEAR QR CODE</button>
+            <button onclick="abrirCamera()">📷 ABRIR CÂMERA (QR CODE)</button>
             <div id="camera-container">
                 <canvas id="canvas"></canvas>
                 <button class="btn-secundario" onclick="fecharCamera()">FECHAR CÂMERA</button>
             </div>
-            <select id="selecionar-evento"></select>
-            <div id="presenca-manual">
-                <p style="margin-top: 10px; font-size: 14px;">Ou selecione na lista de membros abaixo.</p>
-            </div>
+            <hr style="margin: 20px 0;">
+            <h4>Últimos Registros (Hoje)</h4>
+            <div id="lista-presenca-hoje"></div>
         </div>
     </div>
 
     <div id="aba-config" class="tab-content">
         <div class="card">
-            <h3>Configurações</h3>
-            <button class="btn-secundario" onclick="exportarExcel()">BAIXAR RELATÓRIO (CSV)</button>
-            <button style="background:#000; margin-top: 20px;" onclick="window.location.reload()">ATUALIZAR APP</button>
+            <h3>Administração</h3>
+            <button class="btn-secundario" onclick="exportarCSV()">BAIXAR RELATÓRIO EXCEL (CSV)</button>
+            <button style="background:#000; margin-top: 20px;" onclick="location.reload()">FORÇAR ATUALIZAÇÃO</button>
         </div>
     </div>
 </div>
@@ -83,89 +82,115 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, push, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // ATENÇÃO: COLE AS SUAS CONFIGURAÇÕES DO FIREBASE AQUI ABAIXO
-    const firebaseConfig = {
-        apiKey: "SUA_API_KEY",
-        authDomain: "SEU_PROJETO.firebaseapp.com",
-        databaseURL: "https://SEU_PROJETO-default-rtdb.firebaseio.com",
-        projectId: "SEU_PROJETO",
-        storageBucket: "SEU_PROJETO.appspot.com",
-        messagingSenderId: "ID",
-        appId: "APP_ID"
-    };
-
+    // --- CONFIGURAÇÃO DO FIREBASE (SUBSTITUA PELOS SEUS DADOS) ---
+ const firebaseConfig = {
+  apiKey: "AIzaSyDpApwCKpVyLzbWee_-7oXpEZYYLDvg7JU",
+  authDomain: "mtst-controle.firebaseapp.com",
+  databaseURL: "https://mtst-controle-default-rtdb.firebaseio.com",
+  projectId: "mtst-controle",
+  storageBucket: "mtst-controle.firebasestorage.app",
+  messagingSenderId: "101701970728",
+  appId: "1:101701970728:web:065d8ddd116b42e87b3e1d",
+  measurementId: "G-G6R3GJZMJG"
+};
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const dbRef = ref(db, 'mtst_dados');
+    let dadosMembros = {};
 
-    let dadosLocais = { membros: {}, presencas: {} };
-
-    // SINCRONIZAÇÃO EM TEMPO REAL
-    onValue(dbRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            dadosLocais = data;
-            document.getElementById('status-sync').innerText = "✅ Sincronizado";
-            document.getElementById('status-sync').style.color = "green";
-            atualizarTela();
-        }
+    // Escutar membros em tempo real
+    onValue(ref(db, 'mtst/membros'), (snapshot) => {
+        dadosMembros = snapshot.val() || {};
+        document.getElementById('status-sync').innerText = "✅ Nuvem Ativa";
+        document.getElementById('status-sync').style.color = "green";
+        atualizarListaMembros();
     });
 
-    // FUNÇÕES GLOBAIS
-    window.cadastrarMembro = () => {
+    // Função de Cadastrar
+    window.cadastrarMembro = async () => {
         const nome = document.getElementById('nome-membro').value.trim();
-        if(!nome) return alert("Digite o nome");
-        
-        const novoId = Date.now(); // ID único baseado no tempo
-        set(ref(db, 'mtst_dados/membros/' + novoId), {
-            id: novoId,
-            nome: nome,
-            cadastro: new Date().toLocaleDateString()
-        });
-        document.getElementById('nome-membro').value = "";
-        alert("Cadastrado na nuvem!");
+        if(!nome) return alert("Por favor, digite o nome.");
+
+        // Verificar se já existe
+        const listaNomes = Object.values(dadosMembros).map(m => m.nome.toLowerCase());
+        if(listaNomes.includes(nome.toLowerCase())) {
+            return alert("Este membro já está cadastrado!");
+        }
+
+        const idUnico = Date.now().toString();
+        const novoMembro = { id: idUnico, nome: nome, data: new Date().toLocaleDateString() };
+
+        try {
+            await set(ref(db, 'mtst/membros/' + idUnico), novoMembro);
+            document.getElementById('nome-membro').value = "";
+            
+            // Gerar QR Code na tela
+            const qrDiv = document.getElementById('qrcode-exibicao');
+            qrDiv.innerHTML = "<p>QR Code gerado para " + nome + ":</p>";
+            new QRCode(qrDiv, { text: idUnico, width: 128, height: 128 });
+            alert("Membro salvo com sucesso!");
+        } catch (e) { alert("Erro ao salvar: " + e); }
     };
 
-    window.marcarPresenca = (membroId) => {
+    // Função de Presença
+    window.marcarPresenca = async (idLido) => {
+        const membro = dadosMembros[idLido];
+        if(!membro) return alert("QR Code Inválido ou Membro não encontrado!");
+
         const hoje = new Date().toISOString().split('T')[0];
-        set(ref(db, `mtst_dados/presencas/${hoje}/${membroId}`), {
-            horario: new Date().toLocaleTimeString(),
-            status: "Presente"
+        const agora = new Date().toLocaleTimeString();
+
+        await set(ref(db, `mtst/presencas/${hoje}/${idLido}`), {
+            nome: membro.nome,
+            hora: agora
         });
-        alert("Presença registrada!");
+        
+        alert("Presença confirmada: " + membro.nome);
     };
 
-    function atualizarTela() {
+    function atualizarListaMembros() {
         const lista = document.getElementById('lista-membros');
         lista.innerHTML = "";
-        
-        if(dadosLocais.membros) {
-            Object.values(dadosLocais.membros).forEach(m => {
-                const div = document.createElement('div');
-                div.className = 'item-lista';
-                div.innerHTML = `
-                    <span>${m.nome}</span>
-                    <button style="width:auto; padding:5px 10px;" onclick="marcarPresenca('${m.id}')">Presença</button>
-                `;
-                lista.appendChild(div);
-            });
-        }
+        Object.values(dadosMembros).forEach(m => {
+            const div = document.createElement('div');
+            div.className = 'item-lista';
+            div.innerHTML = `<span>${m.nome}</span> <button style="width:auto; padding:5px" onclick="window.marcarPresenca('${m.id}')">Manual</button>`;
+            lista.appendChild(div);
+        });
     }
 
-    // Navegação simples
-    window.mudarAba = (id) => {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
+    window.exportarCSV = async () => {
+        const snapshot = await get(ref(db, 'mtst/presencas'));
+        const presencas = snapshot.val();
+        if(!presencas) return alert("Sem dados para exportar.");
+        
+        let csv = "Data;Nome;Horario\n";
+        for (let data in presencas) {
+            for (let id in presencas[data]) {
+                csv += `${data};${presencas[data][id].nome};${presencas[data][id].hora}\n`;
+            }
+        }
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('href', url);
+        a.setAttribute('download', 'relatorio_mtst.csv');
+        a.click();
     };
 </script>
 
 <script>
-    // Lógica da Câmera (mantida do seu original)
+    // Controle da Câmera
     let video = document.createElement("video");
     let canvasElement = document.getElementById("canvas");
     let canvas = canvasElement.getContext("2d");
+
+    function mudarAba(id) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(id !== 'aba-presenca') fecharCamera();
+    }
 
     function abrirCamera() {
         document.getElementById('camera-container').style.display = 'block';
@@ -178,7 +203,7 @@
     }
 
     function fecharCamera() {
-        video.srcObject.getTracks().forEach(track => track.stop());
+        if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
         document.getElementById('camera-container').style.display = 'none';
     }
 
@@ -190,14 +215,15 @@
             var imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
             var code = jsQR(imageData.data, imageData.width, imageData.height);
             if (code) {
-                // Ao ler o QR Code, extrai o ID e marca presença
                 window.marcarPresenca(code.data);
                 fecharCamera();
+                return;
             }
         }
-        requestAnimationFrame(tick);
+        if(document.getElementById('camera-container').style.display === 'block') {
+            requestAnimationFrame(tick);
+        }
     }
 </script>
-
 </body>
 </html>
