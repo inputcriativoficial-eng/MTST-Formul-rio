@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MTST - Sistema Completo</title>
+    <title>MTST - Sistema Completo com Foto</title>
     
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -21,21 +21,28 @@
         
         h2 { color: var(--dark); margin-bottom: 15px; font-size: 1.1rem; border-left: 4px solid var(--red); padding-left: 10px; text-transform: uppercase; }
         input, select { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
-        button { width: 100%; padding: 12px; background: var(--red); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 5px; }
-        .btn-black { background: #000; }
+        
+        /* Estilo do campo de Foto */
+        .foto-input-area { margin-bottom: 15px; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px dashed #ccc; text-align: center; }
+        .foto-input-area label { display: block; margin-bottom: 5px; font-size: 13px; font-weight: bold; color: #555; }
+        
+        button { width: 100%; padding: 12px; background: var(--red); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
-        /* Lista de Membros Estilo Carteirinha */
+        /* Carteirinha com Foto Real */
         .membro-item { background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px; display: flex; align-items: center; border: 1px solid #ddd; position: relative; }
+        .membro-foto-container { width: 80px; height: 100px; background: #eee; border-radius: 6px; margin-right: 15px; overflow: hidden; border: 1px solid #ddd; }
+        .membro-foto-container img { width: 100%; height: 100%; object-fit: cover; }
+        
         .membro-info { flex: 1; }
         .membro-info h3 { font-size: 15px; color: var(--dark); text-transform: uppercase; }
         .membro-info p { font-size: 12px; color: #666; }
         .qr-area { width: 65px; height: 65px; border: 1px solid #eee; }
+        
         .btn-del { position: absolute; top: 5px; right: 5px; background: #000; color: #fff; border: none; width: 22px; height: 22px; border-radius: 50%; font-size: 10px; cursor: pointer; }
 
-        /* Navegação com 4 botões */
         nav { position: fixed; bottom: 0; width: 100%; background: var(--dark); display: flex; border-top: 3px solid var(--red); z-index: 1000; }
         .nav-item { flex: 1; padding: 12px 5px; color: #888; text-align: center; font-size: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
-        .nav-item.active { color: white; background: #222; border-top: 2px solid white; }
+        .nav-item.active { color: white; background: #222; }
 
         .section { display: none; }
         .section.active { display: block; }
@@ -53,37 +60,32 @@
             <h2>Cadastrar Membro</h2>
             <input type="text" id="reg-nome" placeholder="Nome Completo">
             <input type="text" id="reg-setor" placeholder="Setor / Ocupação">
-            <button onclick="salvarMembro()">SALVAR NA NUVEM</button>
+            
+            <div class="foto-input-area">
+                <label>Foto do Membro:</label>
+                <input type="file" id="reg-foto" accept="image/*">
+            </div>
+
+            <button onclick="salvarMembro()">CADASTRAR E SALVAR</button>
         </div>
         <input type="text" id="busca" placeholder="🔍 Buscar por nome..." onkeyup="filtrar()">
         <div id="lista-membros"></div>
     </div>
 
     <div id="aba-eventos" class="section">
-        <div class="card">
-            <h2>Criar Evento / Reunião</h2>
-            <input type="text" id="ev-nome" placeholder="Nome da Atividade">
-            <input type="date" id="ev-data">
-            <button onclick="salvarEvento()">CRIAR EVENTO</button>
-        </div>
-        <div id="lista-eventos"></div>
+        <div class="card"><h2>Eventos</h2><div id="lista-eventos"></div></div>
     </div>
 
     <div id="aba-scan" class="section">
         <div class="card">
-            <h2>Leitor de QR Code</h2>
+            <h2>Scanner</h2>
             <div id="reader"></div>
-            <div id="feedback" style="margin-top:10px; padding:10px; text-align:center; border-radius:8px; font-weight:bold;"></div>
+            <div id="feedback" style="margin-top:10px; padding:10px; text-align:center; border-radius:8px;"></div>
         </div>
     </div>
 
     <div id="aba-admin" class="section">
-        <div class="card">
-            <h2>Painel Administrativo</h2>
-            <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Acesso restrito para exportação de dados.</p>
-            <button class="btn-black" onclick="alert('Relatório gerado no console')">GERAR RELATÓRIO PDF</button>
-            <button class="btn-black" onclick="window.location.reload()">FORÇAR ATUALIZAÇÃO</button>
-        </div>
+        <div class="card"><h2>Painel Admin</h2><button onclick="window.location.reload()">ATUALIZAR APP</button></div>
     </div>
 
 </div>
@@ -97,7 +99,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, remove, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDpApwCKpVyLzbWee_-7oXpEZYYLDvg7JU",
@@ -113,25 +115,42 @@
     const db = getDatabase(app);
     let cacheMembros = {};
 
-    // Sincronização Global
-    onValue(ref(db, '/'), (snapshot) => {
-        const data = snapshot.val() || {};
-        cacheMembros = data.membros || {};
-        document.getElementById('sync-status').innerText = "✅ SISTEMA ONLINE - MTST CLOUD";
-        document.getElementById('sync-status').style.color = "green";
+    onValue(ref(db, 'membros'), (snapshot) => {
+        cacheMembros = snapshot.val() || {};
+        document.getElementById('sync-status').innerText = "✅ SISTEMA ONLINE";
         renderMembros();
-        renderEventos(data.eventos || {});
     });
 
-    // --- FUNÇÕES DE MEMBROS ---
     window.salvarMembro = () => {
         const nome = document.getElementById('reg-nome').value;
         const setor = document.getElementById('reg-setor').value;
+        const arquivo = document.getElementById('reg-foto').files[0];
+        
         if(!nome) return alert("Insira o nome!");
+
         const id = "M" + Date.now();
-        set(ref(db, 'membros/' + id), { id, nome, setor: setor || "Base", data: new Date().toLocaleDateString() });
-        document.getElementById('reg-nome').value = ""; document.getElementById('reg-setor').value = "";
+        
+        // Se tiver foto, vamos converter para texto (Base64) para salvar no banco
+        if(arquivo) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const fotoBase64 = e.target.result;
+                enviarParaFirebase(id, nome, setor, fotoBase64);
+            }
+            reader.readAsDataURL(arquivo);
+        } else {
+            enviarParaFirebase(id, nome, setor, "");
+        }
     };
+
+    function enviarParaFirebase(id, nome, setor, foto) {
+        set(ref(db, 'membros/' + id), { id, nome, setor: setor || "Base", foto: foto, data: new Date().toLocaleDateString() })
+        .then(() => {
+            alert("Cadastrado!");
+            document.getElementById('reg-nome').value = "";
+            document.getElementById('reg-foto').value = "";
+        });
+    }
 
     function renderMembros(busca = "") {
         const lista = document.getElementById('lista-membros');
@@ -140,9 +159,20 @@
             if(m.nome.toLowerCase().includes(busca.toLowerCase())) {
                 const div = document.createElement('div');
                 div.className = 'membro-item';
-                div.innerHTML = `<button class="btn-del" onclick="remover('${m.id}')">X</button>
-                    <div class="membro-info"><h3>${m.nome}</h3><p>${m.setor}</p><p style="font-size:9px">${m.id}</p></div>
-                    <div id="qr-${m.id}" class="qr-area"></div>`;
+                // Mostra a foto cadastrada ou um ícone padrão se não tiver
+                const imagemSrc = m.foto || 'https://via.placeholder.com/80x100?text=SEM+FOTO';
+                
+                div.innerHTML = `
+                    <button class="btn-del" onclick="remover('${m.id}')">X</button>
+                    <div class="membro-foto-container">
+                        <img src="${imagemSrc}">
+                    </div>
+                    <div class="membro-info">
+                        <h3>${m.nome}</h3>
+                        <p>${m.setor}</p>
+                    </div>
+                    <div id="qr-${m.id}" class="qr-area"></div>
+                `;
                 lista.appendChild(div);
                 new QRCode(document.getElementById(`qr-${m.id}`), { text: m.id, width: 65, height: 65 });
             }
@@ -151,39 +181,6 @@
 
     window.remover = (id) => { if(confirm("Remover membro?")) remove(ref(db, 'membros/' + id)); };
     window.filtrar = () => { renderMembros(document.getElementById('busca').value); };
-
-    // --- FUNÇÕES DE EVENTOS ---
-    window.salvarEvento = () => {
-        const nome = document.getElementById('ev-nome').value;
-        const data = document.getElementById('ev-data').value;
-        if(!nome || !data) return alert("Preencha evento e data!");
-        push(ref(db, 'eventos'), { nome, data });
-        document.getElementById('ev-nome').value = "";
-    };
-
-    function renderEventos(eventos) {
-        const lista = document.getElementById('lista-eventos');
-        lista.innerHTML = "";
-        Object.values(eventos).reverse().forEach(e => {
-            const div = document.createElement('div');
-            div.className = 'card';
-            div.innerHTML = `<strong>${e.nome}</strong><br><small>${e.data}</small>`;
-            lista.appendChild(div);
-        });
-    }
-
-    // --- SCANNER ---
-    window.validar = (id) => {
-        const feedback = document.getElementById('feedback');
-        if(cacheMembros[id]) {
-            feedback.innerHTML = "✅ PRESENÇA REGISTRADA: " + cacheMembros[id].nome;
-            feedback.style.background = "#d4edda";
-            // Aqui você pode adicionar o push para 'presencas' no Firebase se quiser histórico
-        } else {
-            feedback.innerHTML = "❌ NÃO CADASTRADO";
-            feedback.style.background = "#f8d7da";
-        }
-    };
 </script>
 
 <script>
@@ -193,14 +190,16 @@
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         el.classList.add('active');
-        if(id === 'aba-scan') ligarCamera(); else desligarCamera();
+        if(id === 'aba-scan') ligarCamera(); else if(scanner) scanner.stop();
     }
-
     function ligarCamera() {
         scanner = new Html5Qrcode("reader");
-        scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, msg => window.validar(msg)).catch(e => {});
+        scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, msg => {
+            const feed = document.getElementById('feedback');
+            feed.innerHTML = "Lido ID: " + msg;
+            feed.style.background = "#d4edda";
+        }).catch(e => {});
     }
-    function desligarCamera() { if(scanner) scanner.stop(); }
 </script>
 
 </body>
