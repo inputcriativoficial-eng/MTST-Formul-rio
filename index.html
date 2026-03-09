@@ -3,23 +3,32 @@
 <head>
     <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getDatabase, ref, set, push, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  import { getDatabase, ref, set, push, onValue, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-  // SUAS CONFIGURAÇÕES DO FIREBASE AQUI
   const firebaseConfig = {
-  apiKey: "AIzaSyDpApwCKpVyLzbWee_-7oXpEZYYLDvg7JU",
-  authDomain: "mtst-controle.firebaseapp.com",
-  databaseURL: "https://mtst-controle-default-rtdb.firebaseio.com",
-  projectId: "mtst-controle",
-  storageBucket: "mtst-controle.firebasestorage.app",
-  messagingSenderId: "101701970728",
-  appId: "1:101701970728:web:065d8ddd116b42e87b3e1d",
-  measurementId: "G-G6R3GJZMJG"
-};
+    apiKey: "AIzaSyDpApwCKpVyLzbWee_-7oXpEZYYLDvg7JU",
+    authDomain: "mtst-controle.firebaseapp.com",
+    databaseURL: "https://mtst-controle-default-rtdb.firebaseio.com",
+    projectId: "mtst-controle",
+    storageBucket: "mtst-controle.firebasestorage.app",
+    messagingSenderId: "101701970728",
+    appId: "1:101701970728:web:065d8ddd116b42e87b3e1d",
+    measurementId: "G-G6R3GJZMJG"
+  };
 
-  // Inicializar Firebase
+  // Inicializa o Firebase
   const app = initializeApp(firebaseConfig);
-  window.db = getDatabase(app); // Tornar global para usar nos seus scripts existentes
+  const db = getDatabase(app);
+
+  // EXPOSTO PARA O GLOBAL: Isso permite que o resto do seu código funcione
+  window.db = db;
+  window.ref = ref;
+  window.set = set;
+  window.push = push;
+  window.onValue = onValue;
+  window.get = get;
+
+  console.log("Firebase conectado com sucesso!");
 </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
