@@ -1,6 +1,26 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getDatabase, ref, set, push, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+  // SUAS CONFIGURAÇÕES DO FIREBASE AQUI
+  const firebaseConfig = {
+  apiKey: "AIzaSyDpApwCKpVyLzbWee_-7oXpEZYYLDvg7JU",
+  authDomain: "mtst-controle.firebaseapp.com",
+  databaseURL: "https://mtst-controle-default-rtdb.firebaseio.com",
+  projectId: "mtst-controle",
+  storageBucket: "mtst-controle.firebasestorage.app",
+  messagingSenderId: "101701970728",
+  appId: "1:101701970728:web:065d8ddd116b42e87b3e1d",
+  measurementId: "G-G6R3GJZMJG"
+};
+
+  // Inicializar Firebase
+  const app = initializeApp(firebaseConfig);
+  window.db = getDatabase(app); // Tornar global para usar nos seus scripts existentes
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MTST - SISTEMA PROFISSIONAL</title>
@@ -709,7 +729,7 @@
     <div class="header-content">
         <div class="logo-area">
             <div class="logo-mtst">
-                <img src="https://wikifavelas.com.br/images/thumb/b/b4/Logo_MTST.png/300px-Logo_MTST.png" alt="MTST" onerror="this.src='https://via.placeholder.com/60?text=MTST'">
+                <img src="Logo_MTST.png" alt="MTST" onerror="this.src='https://via.placeholder.com/60?text=MTST'">
             </div>
             <div class="title-area">
                 <h1>MTST - SISTEMA PROFISSIONAL</h1>
